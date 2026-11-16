@@ -1,0 +1,10 @@
+# Arquivos que o Python cria sozinho ao rodar
+__pycache__/
+*.pyc
+
+# Configuracao pessoal do VS Code
+.vscode/
+
+# Historico e relatorios gerados pelo programa
+log.txt
+relatorio*.csv
