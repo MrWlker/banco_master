@@ -4,7 +4,11 @@
 # guardado em docs/codigo_original_colab.ipynb.
 # Unica linha trocada: o endereco do test.csv dentro de leitura()
 # (o proprio comentario da funcao pede essa troca).
+#
+# A parte 4 (pais, faixa de idade, faixa de score e saldo) foi
+# adicionada depois, seguindo o mesmo jeito da parte 3.
 # =============================================================
+from services.estatisticas import classificar_score
 
 
 # ---------- 1. LEITURA DO ARQUIVO ----------
@@ -65,6 +69,37 @@ def pesquisar_idade_genero_atividade(dados_gerais, idade=None, genero=None, memb
         if idade:
             try:
                 if i.get('Age') != float(idade):
+                    continue
+            except (ValueError, TypeError):
+                continue
+        resultados.append(i)
+    return resultados
+
+
+# ---------- 4. OUTROS FILTROS ----------
+#pesquisa por pais, faixa de idade, faixa de score ou saldo minimo
+def pesquisar_pais_idade_score_saldo(dados_gerais, pais=None, idade_minima=None, idade_maxima=None, faixa_score=None, saldo_minimo=None):
+    resultados = []
+    for i in dados_gerais:
+        if pais and (i.get('Geography').lower() != pais.lower()):
+            continue
+        if idade_minima is not None:
+            try:
+                if i.get('Age') < float(idade_minima):
+                    continue
+            except (ValueError, TypeError):
+                continue
+        if idade_maxima is not None:
+            try:
+                if i.get('Age') > float(idade_maxima):
+                    continue
+            except (ValueError, TypeError):
+                continue
+        if faixa_score and (classificar_score(i.get('CreditScore')) != faixa_score):
+            continue
+        if saldo_minimo is not None:
+            try:
+                if i.get('Balance') < float(saldo_minimo):
                     continue
             except (ValueError, TypeError):
                 continue

@@ -28,7 +28,7 @@ QPushButton:hover { background: #1541B5; }
 #cartao QLabel { border: none; }
 #total { font-size: 14px; font-weight: bold; color: #0B2F8A; }
 
-QComboBox, QSpinBox {
+QComboBox, QSpinBox, QDoubleSpinBox {
     background: white; color: #1B2440; border: 1px solid #C9D1E6;
     border-radius: 6px; padding: 5px 8px; font-size: 13px; min-width: 90px;
 }

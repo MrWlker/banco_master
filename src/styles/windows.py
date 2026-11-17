@@ -5,7 +5,7 @@ import sys
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import (
-    QApplication, QButtonGroup, QComboBox, QFrame, QHBoxLayout, QHeaderView,
+    QApplication, QButtonGroup, QComboBox, QDoubleSpinBox, QFrame, QHBoxLayout, QHeaderView,
     QLabel, QLineEdit, QMainWindow, QPushButton, QSpinBox, QStackedWidget,
     QTableView, QVBoxLayout, QWidget,
 )
@@ -104,10 +104,35 @@ class Janela(QMainWindow):
         dentro.setContentsMargins(16, 14, 16, 14)
         dentro.setSpacing(12)
 
-        self.campo_idade = QSpinBox()
-        self.campo_idade.setRange(0, 120)
-        self.campo_idade.setSpecialValueText("Todas")   # 0 = sem filtro de idade
-        self.campo_idade.editingFinished.connect(self.consultar)
+        # Paises que existem nos dados (vem da funcao de estatistica).
+        self.campo_pais = QComboBox()
+        self.campo_pais.addItem("Todos", None)
+        for pais in sorted(estatisticas.contar_por_pais(self.dados_gerais)):
+            self.campo_pais.addItem(pais, pais)
+        self.campo_pais.currentIndexChanged.connect(self.consultar)
+
+        self.campo_idade_minima = QSpinBox()
+        self.campo_idade_minima.setRange(0, 120)
+        self.campo_idade_minima.setValue(0)
+        self.campo_idade_minima.editingFinished.connect(self.consultar)
+
+        self.campo_idade_maxima = QSpinBox()
+        self.campo_idade_maxima.setRange(0, 120)
+        self.campo_idade_maxima.setValue(120)
+        self.campo_idade_maxima.editingFinished.connect(self.consultar)
+
+        self.campo_score = QComboBox()
+        self.campo_score.addItem("Todos", None)
+        for faixa in ["Excelente", "Bom", "Regular", "Ruim"]:
+            self.campo_score.addItem(faixa, faixa)
+        self.campo_score.currentIndexChanged.connect(self.consultar)
+
+        self.campo_saldo = QDoubleSpinBox()
+        self.campo_saldo.setRange(0, 1_000_000)
+        self.campo_saldo.setSingleStep(10_000)
+        self.campo_saldo.setPrefix("R$ ")
+        self.campo_saldo.setSpecialValueText("Qualquer")   # 0 = sem filtro de saldo
+        self.campo_saldo.editingFinished.connect(self.consultar)
 
         self.campo_genero = QComboBox()
         self.campo_genero.addItem("Todos", None)
@@ -125,10 +150,16 @@ class Janela(QMainWindow):
         botao_limpar.setObjectName("botao_limpar")
         botao_limpar.clicked.connect(self.limpar)
 
+        # 1a linha: pais, idade, genero e situacao
         linha_filtros = QHBoxLayout()
         linha_filtros.setSpacing(10)
-        linha_filtros.addWidget(QLabel("Idade:"))
-        linha_filtros.addWidget(self.campo_idade)
+        linha_filtros.addWidget(QLabel("País:"))
+        linha_filtros.addWidget(self.campo_pais)
+        linha_filtros.addSpacing(10)
+        linha_filtros.addWidget(QLabel("Idade de"))
+        linha_filtros.addWidget(self.campo_idade_minima)
+        linha_filtros.addWidget(QLabel("até"))
+        linha_filtros.addWidget(self.campo_idade_maxima)
         linha_filtros.addSpacing(10)
         linha_filtros.addWidget(QLabel("Gênero:"))
         linha_filtros.addWidget(self.campo_genero)
@@ -136,7 +167,17 @@ class Janela(QMainWindow):
         linha_filtros.addWidget(QLabel("Situação:"))
         linha_filtros.addWidget(self.campo_ativo)
         linha_filtros.addStretch(1)
-        linha_filtros.addWidget(botao_limpar)
+
+        # 2a linha: score, saldo e limpar
+        linha_filtros2 = QHBoxLayout()
+        linha_filtros2.setSpacing(10)
+        linha_filtros2.addWidget(QLabel("Score:"))
+        linha_filtros2.addWidget(self.campo_score)
+        linha_filtros2.addSpacing(10)
+        linha_filtros2.addWidget(QLabel("Saldo a partir de:"))
+        linha_filtros2.addWidget(self.campo_saldo)
+        linha_filtros2.addStretch(1)
+        linha_filtros2.addWidget(botao_limpar)
 
         self.tabela = TabelaClientes()
         visao = QTableView()
@@ -154,6 +195,7 @@ class Janela(QMainWindow):
         visao.horizontalHeader().setStretchLastSection(True)
 
         dentro.addLayout(linha_filtros)
+        dentro.addLayout(linha_filtros2)
         dentro.addWidget(visao, 1)
 
         # --- caixa de baixo: total encontrado ---
@@ -289,9 +331,19 @@ class Janela(QMainWindow):
     def consultar(self, *ignorado):
         # 1. Le o que o usuario escolheu na tela.
         termo = self.campo_busca.text().strip()
-        idade = self.campo_idade.value() or None      # 0 vira None (sem filtro)
+        pais = self.campo_pais.currentData()
+        idade_minima = self.campo_idade_minima.value()
+        idade_maxima = self.campo_idade_maxima.value()
         genero = self.campo_genero.currentData()
         ativo = self.campo_ativo.currentData()
+        faixa_score = self.campo_score.currentData()
+        saldo_minimo = self.campo_saldo.value() or None   # 0 vira None (sem filtro)
+
+        # Sem filtro de idade quando a faixa e a de sempre (0 a 120).
+        if idade_minima == 0:
+            idade_minima = None
+        if idade_maxima == 120:
+            idade_maxima = None
 
         # 2. Busca por sobrenome/codigo. Sem texto, comeca com todos os clientes.
         if termo:
@@ -300,9 +352,14 @@ class Janela(QMainWindow):
             clientes = self.dados_gerais
 
         # 3. Aplica os filtros em cima do resultado da busca.
-        if idade or genero or ativo:
+        if genero or ativo:
             clientes = filtros.pesquisar_idade_genero_atividade(
-                clientes, idade=idade, genero=genero, membro_ativo=ativo
+                clientes, genero=genero, membro_ativo=ativo
+            )
+        if pais or idade_minima or idade_maxima or faixa_score or saldo_minimo:
+            clientes = filtros.pesquisar_pais_idade_score_saldo(
+                clientes, pais=pais, idade_minima=idade_minima, idade_maxima=idade_maxima,
+                faixa_score=faixa_score, saldo_minimo=saldo_minimo
             )
 
         # 4. Mostra a resposta.
@@ -312,11 +369,13 @@ class Janela(QMainWindow):
 
     def limpar(self):
         # Volta tudo para o inicio sem disparar uma consulta por campo.
-        for campo in (self.campo_genero, self.campo_ativo):
+        for campo in (self.campo_pais, self.campo_genero, self.campo_ativo, self.campo_score):
             campo.blockSignals(True)
             campo.setCurrentIndex(0)
             campo.blockSignals(False)
-        self.campo_idade.setValue(0)
+        self.campo_idade_minima.setValue(0)
+        self.campo_idade_maxima.setValue(120)
+        self.campo_saldo.setValue(0)
         self.campo_busca.clear()
         self.consultar()
 

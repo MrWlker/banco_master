@@ -23,7 +23,7 @@ python src/app.py
 ## Como usar a tela
 
 - **Barra de busca (parte superior):** digite o sobrenome ou o código do cliente e pressione Enter.
-- **Filtros:** permitem filtrar por idade, gênero e situação (ativo/inativo). Os filtros funcionam em conjunto com a busca.
+- **Filtros:** permitem filtrar por país, faixa de idade, gênero, situação (ativo/inativo), faixa de score e saldo mínimo. Os filtros funcionam todos juntos e em conjunto com a busca. Para ver os **inativos com saldo alto**, escolha Situação = Inativos e um saldo mínimo.
 - **Tabela:** apresenta os clientes encontrados.
 - **Caixa inferior:** mostra a quantidade de clientes encontrados.
 - **Aba Estatísticas:** apresenta as médias de saldo, salário, score e idade; o total de clientes por país; a quantidade de clientes em cada faixa de score; e três gráficos (país, faixa de score e idades). Todas as estatísticas são calculadas com base nos resultados da consulta exibidos na tabela.
@@ -67,7 +67,7 @@ Programa_Estatiticas/
 1. `app.py` chama `leitura()`, que abre o arquivo `test.csv` e armazena os clientes em uma lista.
 2. `app.py` abre a janela e entrega essa lista para ela.
 3. O usuário digita uma busca ou seleciona um filtro na janela.
-4. A janela chama `pesquisar_nome_id()` para realizar a busca e, em seguida, `pesquisar_idade_genero_atividade()` para aplicar os filtros.
+4. A janela chama `pesquisar_nome_id()` para realizar a busca e, em seguida, `pesquisar_idade_genero_atividade()` (gênero e situação) e `pesquisar_pais_idade_score_saldo()` (país, idade, score e saldo) para aplicar os filtros.
 5. As funções devolvem a lista de clientes encontrados, e a janela apresenta os resultados na tabela.
 6. Na aba Estatísticas, a janela envia essa mesma lista para as funções de `estatisticas.py` e `graficos.py` e apresenta os resultados obtidos.
 
@@ -76,7 +76,7 @@ Programa_Estatiticas/
 | Item obrigatório | Onde está implementado |
 |---|---|
 | Manipulação de arquivos | `leitura()` abre e lê o arquivo `test.csv`. |
-| Funções | `leitura()`, `pesquisar_nome_id()`, `pesquisar_idade_genero_atividade()`, `calcular_media()`, `contar_por_pais()`, `classificar_score()` e `contar_por_faixa_score()`. |
+| Funções | `leitura()`, `pesquisar_nome_id()`, `pesquisar_idade_genero_atividade()`, `pesquisar_pais_idade_score_saldo()`, `calcular_media()`, `contar_por_pais()`, `classificar_score()` e `contar_por_faixa_score()`. |
 | Estruturas condicionais | Os comandos `if` dos filtros e as condições de `classificar_score()`. |
 | Estruturas de repetição | Os comandos `for` que percorrem as linhas do arquivo, a lista de clientes e realizam as contagens. |
 
@@ -86,7 +86,9 @@ Programa_Estatiticas/
 - **`pesquisar_nome_id(dados_gerais, nome_id)`** — busca clientes pelo sobrenome ou pelo código do cliente (`CustomerId`).
 - **`pesquisar_idade_genero_atividade(dados_gerais, idade, genero, membro_ativo)`** — filtra os clientes por idade, gênero e/ou situação de membro ativo.
 
-O código dessas funções é o mesmo utilizado no notebook original do Colab (`docs/codigo_original_colab.ipynb`). A única alteração foi o caminho do arquivo `test.csv` dentro da função `leitura()`.
+O código dessas três funções é o mesmo utilizado no notebook original do Colab (`docs/codigo_original_colab.ipynb`). A única alteração foi o caminho do arquivo `test.csv` dentro da função `leitura()`.
+
+- **`pesquisar_pais_idade_score_saldo(dados_gerais, pais, idade_minima, idade_maxima, faixa_score, saldo_minimo)`** — filtra os clientes por país, faixa de idade, faixa de score de crédito e/ou saldo mínimo. Foi adicionada depois, seguindo o mesmo padrão da função de cima: cada filtro é opcional e, se o cliente não passar em um deles, o `continue` pula para o próximo cliente.
 
 ## Funções de estatística (`src/services/estatisticas.py`)
 
