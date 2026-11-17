@@ -4,12 +4,10 @@
 # guardado em docs/codigo_original_colab.ipynb.
 # Unica linha trocada: o endereco do test.csv dentro de leitura()
 # (o proprio comentario da funcao pede essa troca).
-#
-# A parte 4 (pais, faixa de idade, faixa de score e saldo) foi
-# adicionada depois, seguindo o mesmo jeito da parte 3.
 # =============================================================
-from services.estatisticas import classificar_score
 
+#preciso do score pra busca ficar mais facil
+from services.estatisticas import classificar_score
 
 # ---------- 1. LEITURA DO ARQUIVO ----------
 #lembrar de trocar o endereço do arquivo pra testar
@@ -55,7 +53,7 @@ def pesquisar_nome_id(dados_gerais, nome_id=None):
 
 # ---------- 3. FILTROS ----------
 #pesquisa por idade, genero ou atividade
-def pesquisar_idade_genero_atividade(dados_gerais, idade=None, genero=None, membro_ativo=None):
+def pesquisar_idade_genero_atividade(dados_gerais, idade=None, genero=None, membro_ativo=None, pais=None, tempo_no_banco=None, tem_cartão=None, score=None):
     resultados = []
     for i in dados_gerais:
         if genero and (i.get('Gender').lower() != genero.lower()):
@@ -72,36 +70,23 @@ def pesquisar_idade_genero_atividade(dados_gerais, idade=None, genero=None, memb
                     continue
             except (ValueError, TypeError):
                 continue
-        resultados.append(i)
-    return resultados
-
-
-# ---------- 4. OUTROS FILTROS ----------
-#pesquisa por pais, faixa de idade, faixa de score ou saldo minimo
-def pesquisar_pais_idade_score_saldo(dados_gerais, pais=None, idade_minima=None, idade_maxima=None, faixa_score=None, saldo_minimo=None):
-    resultados = []
-    for i in dados_gerais:
-        if pais and (i.get('Geography').lower() != pais.lower()):
-            continue
-        if idade_minima is not None:
+        if pais:
+            if i.get('Geography').lower() != pais.lower():
+                continue
+        if tempo_no_banco:
             try:
-                if i.get('Age') < float(idade_minima):
+                if i.get('Tenure') != float(tempo_no_banco):
                     continue
             except (ValueError, TypeError):
                 continue
-        if idade_maxima is not None:
+        if tem_cartão:
             try:
-                if i.get('Age') > float(idade_maxima):
+                if i.get('HasCrCard') != float(tem_cartão):
                     continue
             except (ValueError, TypeError):
                 continue
-        if faixa_score and (classificar_score(i.get('CreditScore')) != faixa_score):
-            continue
-        if saldo_minimo is not None:
-            try:
-                if i.get('Balance') < float(saldo_minimo):
-                    continue
-            except (ValueError, TypeError):
+        if score:
+            if score.lower() != classificar_score(i.get('CreditScore')).lower():
                 continue
         resultados.append(i)
     return resultados
